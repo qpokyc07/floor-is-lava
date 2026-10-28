@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="lava" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb347"/>
+      <stop offset="0.34" stop-color="#ff5a12"/>
+      <stop offset="1" stop-color="#7d1602"/>
+    </linearGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d4d66"/>
+      <stop offset="1" stop-color="#0a1d2b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="#0b0503"/>
+
+  <!-- лава -->
+  <rect x="36" y="246" width="440" height="230" rx="46" fill="url(#lava)"/>
+  <path d="M64 336 h118 l42 -44 h92 l44 44 h84"
+        fill="none" stroke="#ffe0a0" stroke-width="13"
+        stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+  <path d="M104 432 h108 l30 -32 h126"
+        fill="none" stroke="#ffeec4" stroke-width="11"
+        stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+
+  <!-- камень -->
+  <rect x="146" y="222" width="220" height="156" rx="42" fill="url(#stone)"
+        stroke="#7ff0ff" stroke-width="17"/>
+  <rect x="178" y="252" width="156" height="96" rx="26" fill="#17425e" opacity="0.85"/>
+
+  <!-- огонёк -->
+  <path d="M256 62 c26 34 44 58 44 84 a44 44 0 0 1 -88 0 c0 -26 18 -50 44 -84 z"
+        fill="#ff7a18"/>
+  <path d="M256 108 c12 16 20 27 20 39 a20 20 0 0 1 -40 0 c0 -12 8 -23 20 -39 z"
+        fill="#ffd48a"/>
+</svg>

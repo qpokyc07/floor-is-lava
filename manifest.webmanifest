@@ -1,0 +1,27 @@
+{
+  "name": "Пол — это лава",
+  "short_name": "Лава",
+  "description": "AR-игра: камера смотрит на пол, лава горит, ты прыгаешь по камням",
+  "lang": "ru",
+  "start_url": ".",
+  "scope": ".",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#070302",
+  "theme_color": "#070302",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

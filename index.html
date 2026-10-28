@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#070302" />
+<meta name="color-scheme" content="dark" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
+<title>Пол — это лава</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-mode="boot">
+
+<video id="cam" playsinline autoplay muted></video>
+<canvas id="stage"></canvas>
+<div id="danger"></div>
+
+<!-- ================= HUD ================= -->
+<div id="hud" class="hud hidden">
+  <div class="hud-bar">
+    <div class="score"><span id="score">0.0</span><em>сек</em></div>
+    <div class="best">рекорд <b id="best">—</b></div>
+  </div>
+  <div id="banner" class="banner"></div>
+  <div id="hint" class="hint"></div>
+</div>
+
+<!-- ================= Загрузка ================= -->
+<div id="boot" class="screen">
+  <div class="card center">
+    <div class="flame">🔥</div>
+    <h1>Пол — это лава</h1>
+    <p class="status" id="boot-status">Запускаю…</p>
+    <div class="spinner"></div>
+    <button id="btn-boot-retry" class="btn primary hidden">Попробовать снова</button>
+  </div>
+</div>
+
+<!-- ================= Меню ================= -->
+<div id="menu" class="screen hidden">
+  <div class="card">
+    <div class="flame">🔥</div>
+    <h1>Пол — это лава</h1>
+    <p class="lead">Телефон смотрит на вашу комнату, на полу загорается лава,
+      а вы прыгаете по камням. Картинка идёт на телевизор.</p>
+
+    <p id="menu-warn" class="warn hidden"></p>
+
+    <div class="steps">
+      <div><b>1</b> Поставьте телефон на подставку или полку ~1,3 м, наклоните вниз</div>
+      <div><b>2</b> Включите трансляцию экрана на телевизор</div>
+      <div><b>3</b> Отметьте на полу площадку 2–3 метра и прыгайте</div>
+    </div>
+
+    <div class="row">
+      <button id="btn-start" class="btn primary big">Начать</button>
+      <button id="btn-help" class="btn ghost">Как это работает</button>
+    </div>
+
+    <div class="row small">
+      <button id="btn-sound" class="btn chip">🔊 Звук</button>
+      <button id="btn-demo" class="btn chip">🎬 Демо</button>
+      <button id="btn-cam" class="btn chip">📷 Основная</button>
+      <button id="btn-full" class="btn chip">⛶ Во весь экран</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Справка ================= -->
+<div id="help" class="screen hidden">
+  <div class="card scroll">
+    <h1>Как играть</h1>
+
+    <h2>1. Железо и картинка</h2>
+    <ul>
+      <li>Телефон — на подставке/полке <b>1,2–1,6 м</b> от пола, наклонён вниз так,
+        чтобы в кадр попали и пол, и вы целиком.</li>
+      <li>До площадки <b>2–3,5 м</b>. Чем дальше камера, тем точнее видно ноги.</li>
+      <li>Трансляция экрана: Android → «Smart View»/«Трансляция», iPhone → «Повтор экрана»
+        (AirPlay) или приложение телевизора. Телефон при этом остаётся камерой.</li>
+      <li>Свет включите: в темноте поза определяется хуже.</li>
+    </ul>
+
+    <h2>2. Разметка</h2>
+    <ul>
+      <li>Коснитесь на экране четырёх углов площадки на полу — по порядку:
+        ближний левый → ближний правый → дальний правый → дальний левый.</li>
+      <li>Ориентируйтесь на размер: взрослый шаг ≈ 0,7 м. Площадка 2,4 × 3 м — это
+        примерно 3 × 4 шага.</li>
+      <li>Если сетка «съехала» — поправьте кнопками «ш» и «г».</li>
+    </ul>
+
+    <h2>3. Игра</h2>
+    <ul>
+      <li>Пол — лава. Камни (голубые плиты) — безопасны.</li>
+      <li>Раз в несколько секунд камни тонут и всплывают в другом месте.
+        Перед этим они мигают красным — успейте перепрыгнуть.</li>
+      <li>Стоять на лаве можно 0,3 секунды — потом конец игры.</li>
+      <li>Счёт — сколько секунд вы продержались.</li>
+    </ul>
+
+    <h2>Если что-то не так</h2>
+    <ul>
+      <li><b>Круги под ногами не там</b> — поправьте разметку или кнопки «стопа −/+»
+        внизу (это вертикальная поправка точки стопы).</li>
+      <li><b>Вас «убивает» на камне</b> — увеличьте «стопа +» (на 3–6), точка стопы
+        опустится.</li>
+      <li><b>Прыжки не читаются</b> — встаньте дальше от камеры, чтобы были видны
+        стопы целиком, и проверьте, что пол в кадре не пересвечен.</li>
+    </ul>
+
+    <button id="btn-help-close" class="btn primary">Понятно</button>
+  </div>
+</div>
+
+<!-- ================= Разметка пола ================= -->
+<div id="calib" class="sheet hidden">
+  <div class="sheet-hint" id="calib-hint">Коснитесь пола в ближнем левом углу</div>
+  <div class="sheet-row">
+    <button id="btn-calib-back" class="btn sm">← Меню</button>
+    <button id="btn-undo" class="btn sm">↶ Отменить</button>
+    <button id="btn-reset" class="btn sm">Заново</button>
+    <span class="divider"></span>
+    <span class="tag">ш</span>
+    <button id="btn-w-minus" class="btn mini">−</button>
+    <span class="val" id="w-val">2.4 м</span>
+    <button id="btn-w-plus" class="btn mini">+</button>
+    <span class="tag">г</span>
+    <button id="btn-d-minus" class="btn mini">−</button>
+    <span class="val" id="d-val">3.0 м</span>
+    <button id="btn-d-plus" class="btn mini">+</button>
+    <span class="divider"></span>
+    <span class="tag">стопа</span>
+    <button id="btn-off-minus" class="btn mini">−</button>
+    <span class="val" id="off-val">+8</span>
+    <button id="btn-off-plus" class="btn mini">+</button>
+    <button id="btn-cam2" class="btn sm" title="Переключить камеру">📷</button>
+    <button id="btn-go" class="btn primary push">Поехали</button>
+  </div>
+</div>
+
+<!-- ================= Отсчёт ================= -->
+<div id="count" class="screen center hidden">
+  <div id="count-num" class="count-num">3</div>
+</div>
+
+<!-- ================= Конец игры ================= -->
+<div id="over" class="screen center hidden">
+  <div class="card center">
+    <div class="flame">💀</div>
+    <h1>Ты в лаве</h1>
+    <div class="result">
+      <div><span id="over-score">0.0</span><em>секунд</em></div>
+      <div class="sub">рекорд <b id="over-best">0.0</b></div>
+    </div>
+    <div class="row">
+      <button id="btn-again" class="btn primary big">Ещё раз</button>
+      <button id="btn-over-calib" class="btn ghost">Разметка</button>
+      <button id="btn-over-menu" class="btn ghost">Меню</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

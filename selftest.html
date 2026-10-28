@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Самопроверка · Пол — это лава</title>
+<style>
+  body { margin: 0; padding: 20px; background: #0b0705; color: #ffeede;
+         font: 14px/1.5 "Segoe UI", system-ui, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; color: #ffb066; }
+  .sub { color: #b89f92; margin-bottom: 18px; }
+  .item { padding: 5px 10px; border-radius: 6px; margin: 2px 0;
+          display: flex; gap: 10px; align-items: baseline; }
+  .item.pass { background: rgba(60, 200, 120, 0.1); }
+  .item.fail { background: rgba(255, 60, 40, 0.16); }
+  .mark { font-weight: 700; }
+  .pass .mark { color: #6dffa8; }
+  .fail .mark { color: #ff6a4a; }
+  .extra { color: #b89f92; font-size: 12px; }
+  .total { margin-top: 18px; font-size: 16px; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>Самопроверка</h1>
+<div class="sub">Математика разметки пола и правила игры. Открывать через сервер (нужен http, не file://).</div>
+<div id="out"></div>
+<div class="total" id="total"></div>
+
+<script type="module">
+import * as F from './js/floor.js';
+import { LavaGame } from './js/game.js';
+
+const out = document.getElementById('out');
+let pass = 0;
+let fail = 0;
+
+function ok(name, cond, extra) {
+  const div = document.createElement('div');
+  div.className = 'item ' + (cond ? 'pass' : 'fail');
+  div.innerHTML = `<span class="mark">${cond ? 'OK' : 'FAIL'}</span><span>${name}</span>` +
+    (extra ? ` <span class="extra">${extra}</span>` : '');
+  out.appendChild(div);
+  if (cond) pass++; else fail++;
+  return cond;
+}
+
+function near(a, b, eps = 1e-6) {
+  return Math.abs(a - b) <= eps;
+}
+
+/* ---------- 1. Гомография ---------- */
+
+const H = F.homography(
+  [[0, 0], [1, 0], [1, 1], [0, 1]],
+  [[0, 0], [100, 0], [100, 100], [0, 100]],
+);
+const p1 = F.apply(H, 0.5, 0.5);
+ok('гомография: центр единичного квадрата → (50, 50)', !!p1 && near(p1.x, 50) && near(p1.y, 50),
+  p1 ? `(${p1.x.toFixed(3)}, ${p1.y.toFixed(3)})` : 'нет результата');
+
+const corners = [{ x: 100, y: 600 }, { x: 900, y: 600 }, { x: 700, y: 250 }, { x: 250, y: 250 }];
+const fm = new F.FloorMap();
+fm.setSize(2.4, 3.0);
+ok('FloorMap: разметка принята', fm.setCorners(corners) === true);
+
+const c0 = fm.toScreen(0, 0);
+ok('угол (0,0) → ближний левый пиксель', !!c0 && near(c0.x, 100, 1e-6) && near(c0.y, 600, 1e-6),
+  c0 ? `(${c0.x.toFixed(2)}, ${c0.y.toFixed(2)})` : '');
+
+let roundTrip = true;
+let worst = 0;
+for (const [x, y] of [[0, 0], [2.4, 0], [2.4, 3], [0, 3], [1.2, 1.5], [0.3, 2.7], [2.0, 0.2]]) {
+  const s = fm.toScreen(x, y);
+  const b = s ? fm.toFloor(s.x, s.y) : null;
+  if (!b) { roundTrip = false; continue; }
+  const err = Math.hypot(b.x - x, b.y - y);
+  worst = Math.max(worst, err);
+  if (err > 1e-6) roundTrip = false;
+}
+ok('пол → экран → пол без потерь', roundTrip, `макс. ошибка ${worst.toExponential(2)} м`);
+
+const fmBad = new F.FloorMap();
+ok('вырожденная разметка отклонена',
+  fmBad.setCorners([{ x: 10, y: 10 }, { x: 11, y: 10 }, { x: 11, y: 11 }, { x: 10, y: 11 }]) === false);
+
+const fmBad2 = new F.FloorMap();
+ok('разметка без углов отклонена', fmBad2.setCorners(null) === false);
+
+/* ---------- 2. Узор камней ---------- */
+
+let violations = 0;
+let tries = 400;
+for (let i = 0; i < tries; i++) {
+  const g = new LavaGame();
+  g.resize(2.4, 3.0);
+  const pc = { c: (Math.random() * g.cols) | 0, r: (Math.random() * g.rows) | 0 };
+  g.playerCell = pc;
+  g.score = Math.random() * 80;
+  const esc = g.pickEscape();
+  if (!esc) { violations++; continue; }
+  const dist = Math.hypot((esc.c - pc.c) * g.tileW, (esc.r - pc.r) * g.tileH);
+  const safe = g.buildPattern({ start: esc, forbid: pc });
+  const isSafe = (c, r) => (c >= 0 && r >= 0 && c < g.cols && r < g.rows ? safe[r * g.cols + c] === 1 : false);
+  let nbr = false;
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (!dc && !dr) continue;
+      if (isSafe(pc.c + dc, pc.r + dr)) nbr = true;
+    }
+  }
+  let total = 0;
+  for (let k = 0; k < safe.length; k++) total += safe[k];
+
+  if (dist > 1.36) violations++;
+  if (esc.c !== pc.c || esc.r !== pc.r) { if (!isSafe(esc.c, esc.r)) violations++; }
+  if (isSafe(pc.c, pc.r)) violations++;
+  if (!nbr) violations++;
+  if (total < 3) violations++;
+}
+ok(`узор камней: ${tries} генераций без нарушений`, violations === 0, `нарушений: ${violations}`);
+
+/* ---------- 3. Проверка точки на безопасность ---------- */
+
+const g2 = new LavaGame();
+g2.resize(2.4, 3.0);
+g2.safe.fill(0);
+g2.safe[0] = 1;
+ok('isSafeAt: центр камня', g2.isSafeAt(g2.tileW * 0.5, g2.tileH * 0.5) === true);
+ok('isSafeAt: центр лавы', g2.isSafeAt(g2.tileW * 2.5, g2.tileH * 2.5) === false);
+ok('isSafeAt: край камня с допуском', g2.isSafeAt(g2.tileW * 0.5, g2.tileH * 0.97) === true);
+ok('isSafeAt: за пределами площадки не жжёт', g2.isSafeAt(-1, -1) === true);
+
+/* ---------- 4. Симуляция партии ---------- */
+
+const g3 = new LavaGame();
+g3.resize(2.4, 3.0);
+const feet = [
+  { seen: true, down: true, hasFloor: true, fx: 0.3, fy: 0.3 },
+  { seen: true, down: true, hasFloor: true, fx: 0.5, fy: 0.3 },
+];
+let frames = 0;
+let crashed = null;
+try {
+  for (let i = 0; i < 3600; i++) {
+    let first = -1;
+    for (let k = 0; k < g3.safe.length; k++) {
+      if (g3.safe[k]) { first = k; break; }
+    }
+    if (first >= 0) {
+      const c = first % g3.cols;
+      const r = (first / g3.cols) | 0;
+      const x = (c + 0.5) * g3.tileW;
+      const y = (r + 0.5) * g3.tileH;
+      feet[0].fx = x;
+      feet[0].fy = y;
+      feet[1].fx = x + 0.2;
+      feet[1].fy = y;
+    }
+    g3.update(1 / 30, feet);
+    frames++;
+    if (g3.dead) break;
+  }
+} catch (e) {
+  crashed = e;
+}
+ok('партия 120 секунд без исключений', !crashed, crashed ? String(crashed.message) : '');
+ok('игрок всегда может устоять (есть камень)',
+  !g3.dead, `кадров: ${frames}, счёт: ${g3.score.toFixed(1)}, смен узора: ${g3.changes}`);
+
+const g4 = new LavaGame();
+g4.resize(4.0, 5.0);
+ok('площадка 4×5 м: сетка пересчитана',
+  g4.cols >= 3 && g4.rows >= 3 && near(g4.tileW * g4.cols, 4.0, 1e-9),
+  `${g4.cols}×${g4.rows} плиток, ${g4.tileW.toFixed(2)}×${g4.tileH.toFixed(2)} м`);
+
+/* ---------- итог ---------- */
+
+document.getElementById('total').textContent = fail === 0
+  ? `Все проверки пройдены: ${pass}`
+  : `Провалено ${fail} из ${pass + fail}`;
+document.getElementById('total').style.color = fail === 0 ? '#6dffa8' : '#ff6a4a';
+</script>
+</body>
+</html>
